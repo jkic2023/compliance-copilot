@@ -1,5 +1,5 @@
 using ComplianceCopilot.Shared.Configuration;
-using Microsoft.Extensions.Configuration;
+using ComplianceCopilot.Shared.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,20 +12,29 @@ var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
     ContentRootPath = AppContext.BaseDirectory,
 });
 
+// Critical for a stdio MCP server: stdout is the JSON-RPC protocol channel. Any log line
+// written to stdout corrupts every message after it. Route all logging to stderr instead.
+builder.Logging.AddConsole(options =>
+{
+    options.LogToStandardErrorThreshold = LogLevel.Trace;
+});
+
 builder.Services
-    .AddOptions<McpServerOptions>()
-    .Bind(builder.Configuration.GetSection(McpServerOptions.SectionName));
+    .AddOptions<ComplianceMcpOptions>()
+    .Bind(builder.Configuration.GetSection(ComplianceMcpOptions.SectionName));
 
 builder.Services.AddSingleton(TimeProvider.System);
 
-// MCP tool registration (get_user_companies, get_company_compliance_status, get_document) and
-// the stdio transport are added in a later commit — this host is foundation only for now.
+builder.Services.AddSingleton(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<ComplianceMcpOptions>>().Value;
+    var path = Path.Combine(AppContext.BaseDirectory, options.DataFilePath);
+    return MockDataLoader.LoadFromFile(path);
+});
 
-var host = builder.Build();
+builder.Services
+    .AddMcpServer()
+    .WithStdioServerTransport()
+    .WithToolsFromAssembly();
 
-var logger = host.Services.GetRequiredService<ILogger<Program>>();
-var options = host.Services.GetRequiredService<IOptions<McpServerOptions>>().Value;
-logger.LogInformation(
-    "ComplianceCopilot.McpServer foundation ready. CurrentUserId={CurrentUserId}, DataFilePath={DataFilePath}",
-    options.CurrentUserId,
-    options.DataFilePath);
+await builder.Build().RunAsync();

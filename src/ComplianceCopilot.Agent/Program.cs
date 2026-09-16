@@ -1,5 +1,7 @@
+using ComplianceCopilot.Agent.Orchestration;
 using ComplianceCopilot.Agent.Rag;
 using ComplianceCopilot.Shared.Configuration;
+using ComplianceCopilot.Shared.Agent;
 using ComplianceCopilot.Shared.Rag;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,10 +37,12 @@ builder.Services.AddSingleton(sp =>
 
 builder.Services.AddSingleton<RagRetriever>();
 builder.Services.AddSingleton<RagAnswerGenerator>();
+builder.Services.AddSingleton<IntentExtractor>();
 
-// Full agent orchestration (intent routing, MCP client, verification) is added across later
-// commits. For now this host also supports a standalone RAG-only CLI test path:
+// Full agent orchestration (MCP client wiring, verification) is added in later commits. For
+// now this host also supports standalone CLI test paths:
 //   dotnet run --project src/ComplianceCopilot.Agent -- rag "your question here"
+//   dotnet run --project src/ComplianceCopilot.Agent -- intent "your question here"
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
@@ -60,6 +64,17 @@ if (args.Length >= 2 && args[0] == "rag")
     var answer = await generator.GenerateAsync(query, retrieved);
     Console.WriteLine("Answer:");
     Console.WriteLine(answer);
+}
+else if (args.Length >= 2 && args[0] == "intent")
+{
+    var query = string.Join(' ', args[1..]);
+    var extractor = host.Services.GetRequiredService<IntentExtractor>();
+
+    Console.WriteLine($"Query: {query}\n");
+
+    var intent = await extractor.ExtractAsync(query);
+    Console.WriteLine($"Intent: NeedsRag={intent.NeedsRag}, ToolIntent={intent.ToolIntent}, CompanyName={intent.CompanyName ?? "<none>"}, DocumentType={intent.DocumentType ?? "<none>"}");
+    Console.WriteLine($"Route:  {QueryRouter.Decide(intent)}");
 }
 else
 {

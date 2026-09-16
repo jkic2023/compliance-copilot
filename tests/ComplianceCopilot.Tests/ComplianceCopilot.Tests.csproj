@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ComplianceCopilot.Shared\ComplianceCopilot.Shared.csproj" />
     <ProjectReference Include="..\..\src\ComplianceCopilot.Agent\ComplianceCopilot.Agent.csproj" />
+    <ProjectReference Include="..\..\src\ComplianceCopilot.McpServer\ComplianceCopilot.McpServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

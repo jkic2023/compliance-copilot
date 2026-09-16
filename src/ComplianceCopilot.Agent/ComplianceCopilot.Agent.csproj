@@ -14,6 +14,11 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <!-- Built by ComplianceCopilot.Ingestion at the repo root; linked here rather than
+         duplicated, same pattern as the Tests project's link to the MCP mock-data fixture. -->
+    <Content Include="..\..\rag-index.json" Link="rag-index.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <PropertyGroup>

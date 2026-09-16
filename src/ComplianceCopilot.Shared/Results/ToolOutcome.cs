@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ComplianceCopilot.Shared.Results;
 
 /// <summary>
@@ -27,7 +29,11 @@ public readonly struct ToolOutcome<T>
     public T? Value { get; }
     public ToolError? Error { get; }
 
-    private ToolOutcome(bool isSuccess, T? value, ToolError? error)
+    // Public constructor (System.Text.Json needs one to deserialize a struct with only
+    // get-only properties) is still only meant to be reached via Success/Failure below -
+    // the MCP client on the other side of the wire deserializes exactly this shape back.
+    [JsonConstructor]
+    public ToolOutcome(bool isSuccess, T? value, ToolError? error)
     {
         IsSuccess = isSuccess;
         Value = value;

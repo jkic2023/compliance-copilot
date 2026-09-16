@@ -1,3 +1,4 @@
+using ComplianceCopilot.Agent.Mcp;
 using ComplianceCopilot.Agent.Orchestration;
 using ComplianceCopilot.Agent.Rag;
 using ComplianceCopilot.Shared.Configuration;
@@ -25,8 +26,14 @@ builder.Services
     .AddOptions<RagOptions>()
     .Bind(builder.Configuration.GetSection(RagOptions.SectionName));
 
+builder.Services
+    .AddOptions<ComplianceMcpClientOptions>()
+    .Bind(builder.Configuration.GetSection(ComplianceMcpClientOptions.SectionName));
+
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<OllamaClients>();
+builder.Services.AddSingleton<McpToolClient>();
+builder.Services.AddSingleton<AgentOrchestrator>();
 
 builder.Services.AddSingleton(sp =>
 {
@@ -39,15 +46,25 @@ builder.Services.AddSingleton<RagRetriever>();
 builder.Services.AddSingleton<RagAnswerGenerator>();
 builder.Services.AddSingleton<IntentExtractor>();
 
-// Full agent orchestration (MCP client wiring, verification) is added in later commits. For
-// now this host also supports standalone CLI test paths:
-//   dotnet run --project src/ComplianceCopilot.Agent -- rag "your question here"
-//   dotnet run --project src/ComplianceCopilot.Agent -- intent "your question here"
+// Hallucination verification is added in the next commit. For now:
+//   dotnet run --project src/ComplianceCopilot.Agent -- ask "your question here"     (full pipeline)
+//   dotnet run --project src/ComplianceCopilot.Agent -- rag "your question here"     (RAG only, standalone)
+//   dotnet run --project src/ComplianceCopilot.Agent -- intent "your question here"  (routing only, standalone)
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
-if (args.Length >= 2 && args[0] == "rag")
+if (args.Length >= 2 && args[0] == "ask")
+{
+    var query = string.Join(' ', args[1..]);
+    var orchestrator = host.Services.GetRequiredService<AgentOrchestrator>();
+
+    Console.WriteLine($"Query: {query}\n");
+    var answer = await orchestrator.HandleAsync(query);
+    Console.WriteLine("Answer:");
+    Console.WriteLine(answer);
+}
+else if (args.Length >= 2 && args[0] == "rag")
 {
     var query = string.Join(' ', args[1..]);
     var retriever = host.Services.GetRequiredService<RagRetriever>();
@@ -81,7 +98,12 @@ else
     var ollama = host.Services.GetRequiredService<IOptions<OllamaOptions>>().Value;
     var rag = host.Services.GetRequiredService<IOptions<RagOptions>>().Value;
     logger.LogInformation(
-        "ComplianceCopilot.Agent foundation ready. ChatModel={ChatModel}, TopK={TopK}. Try: dotnet run --project src/ComplianceCopilot.Agent -- rag \"your question\"",
+        "ComplianceCopilot.Agent foundation ready. ChatModel={ChatModel}, TopK={TopK}. Try: dotnet run --project src/ComplianceCopilot.Agent -- ask \"your question\"",
         ollama.ChatModel,
         rag.TopK);
 }
+
+// Explicit disposal, not left to process exit: McpToolClient owns a child OS process (the
+// McpServer), and that process should be told to shut down cleanly rather than orphaned.
+var mcpToolClient = host.Services.GetRequiredService<McpToolClient>();
+await mcpToolClient.DisposeAsync();

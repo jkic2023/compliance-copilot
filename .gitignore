@@ -1,0 +1,27 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Test / coverage output
+TestResults/
+[Cc]overage/
+*.coverage
+*.cobertura.xml
+
+## IDE
+.idea/
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Original brief (not part of the solution)
+DotNet10_AI_Agent_Technical_Assessment*
+
+## Personal / non-deliverable docs
+docs/architecture.html
+docs/interview-prep.md

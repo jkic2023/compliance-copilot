@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ComplianceCopilot.Agent/ComplianceCopilot.Agent.csproj" />
+    <Project Path="src/ComplianceCopilot.Ingestion/ComplianceCopilot.Ingestion.csproj" />
+    <Project Path="src/ComplianceCopilot.McpServer/ComplianceCopilot.McpServer.csproj" />
+    <Project Path="src/ComplianceCopilot.Shared/ComplianceCopilot.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ComplianceCopilot.Tests/ComplianceCopilot.Tests.csproj" />
+  </Folder>
+</Solution>

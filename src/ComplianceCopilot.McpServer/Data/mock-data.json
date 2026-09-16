@@ -1,0 +1,73 @@
+{
+  "users": [
+    { "userId": "u1", "name": "Jordan Lee", "firm": "Lee & Associates Bookkeeping" },
+    { "userId": "u2", "name": "Priya Nair", "firm": "Nair Compliance Services" }
+  ],
+  "companies": [
+    {
+      "companyId": "acme-1",
+      "ownerUserId": "u1",
+      "name": "Acme Pty Ltd",
+      "abn": "51 824 753 556",
+      "incorporationDate": "2015-03-12"
+    },
+    {
+      "companyId": "beta-1",
+      "ownerUserId": "u1",
+      "name": "Beta Holdings Pty Ltd",
+      "abn": "88 010 452 336",
+      "incorporationDate": "2018-07-01"
+    },
+    {
+      "companyId": "gamma-1",
+      "ownerUserId": "u2",
+      "name": "Gamma Trading Pty Ltd",
+      "abn": "23 004 085 616",
+      "incorporationDate": "2020-01-22"
+    }
+  ],
+  "complianceStatuses": [
+    {
+      "companyId": "acme-1",
+      "nextAnnualReviewDue": "2026-11-05",
+      "obligations": [
+        { "description": "Annual review lodgement", "dueDate": "2026-11-05" }
+      ]
+    },
+    {
+      "companyId": "beta-1",
+      "nextAnnualReviewDue": "2026-08-20",
+      "obligations": [
+        { "description": "Annual review lodgement", "dueDate": "2026-08-20" },
+        { "description": "ASIC annual review fee payment", "dueDate": "2026-08-20" }
+      ]
+    },
+    {
+      "companyId": "gamma-1",
+      "nextAnnualReviewDue": "2027-01-22",
+      "obligations": [
+        { "description": "Annual review lodgement", "dueDate": "2027-01-22" }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "companyId": "acme-1",
+      "documentType": "CertificateOfRegistration",
+      "issuedDate": "2015-03-12",
+      "contentSummary": "ASIC Certificate of Registration for Acme Pty Ltd (ACN derived from ABN 51 824 753 556), issued on incorporation."
+    },
+    {
+      "companyId": "acme-1",
+      "documentType": "Constitution",
+      "issuedDate": "2015-03-12",
+      "contentSummary": "Company constitution adopted at incorporation, standard proprietary limited company provisions."
+    },
+    {
+      "companyId": "beta-1",
+      "documentType": "AsicExtract",
+      "issuedDate": "2026-06-01",
+      "contentSummary": "Current ASIC company extract for Beta Holdings Pty Ltd showing registered office, officeholders, and share structure as at 1 June 2026."
+    }
+  ]
+}

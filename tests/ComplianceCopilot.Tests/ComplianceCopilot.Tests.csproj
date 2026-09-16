@@ -23,4 +23,11 @@
     <ProjectReference Include="..\..\src\ComplianceCopilot.Agent\ComplianceCopilot.Agent.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Linked, not copied — the McpServer project's fixture is the single source of truth. -->
+    <Content Include="..\..\src\ComplianceCopilot.McpServer\Data\mock-data.json" Link="Data\mock-data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

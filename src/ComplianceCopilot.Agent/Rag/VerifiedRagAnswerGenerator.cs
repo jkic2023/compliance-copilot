@@ -2,8 +2,13 @@ using ComplianceCopilot.Shared.Rag;
 
 namespace ComplianceCopilot.Agent.Rag;
 
-/// <summary>Whether the returned answer passed the grounding check, and whether a correction pass was needed.</summary>
-public sealed record RagAnswerResult(string Answer, bool IsGrounded, bool RegenerationAttempted);
+/// <summary>
+/// IsGrounded/RegenerationAttempted describe how the answer was produced. IsAnswerAvailable is
+/// the coarser signal AgentOrchestrator's mixed-query path actually branches on: false for both
+/// "nothing retrieved" and "abstained after a failed correction" - the two cases where Answer is
+/// a status message, not a real answer, and shouldn't be handed to the compose LLM as if it were.
+/// </summary>
+public sealed record RagAnswerResult(string Answer, bool IsGrounded, bool RegenerationAttempted, bool IsAnswerAvailable);
 
 /// <summary>
 /// Owns the full RAG hallucination-mitigation loop: retrieve, generate a draft, run
@@ -28,9 +33,11 @@ public sealed class VerifiedRagAnswerGenerator(RagRetriever retriever, RagAnswer
         if (chunks.Count == 0)
         {
             // RagAnswerGenerator itself returns the fixed empty-context message without calling
-            // the model at all - nothing to ground-check.
+            // the model at all - nothing to ground-check, and nothing for the mixed-query path
+            // to treat as a real answer either (see §7 of the build plan: abstain on the
+            // knowledge portion specifically when retrieval comes back empty).
             var emptyAnswer = await generator.GenerateAsync(query, chunks, ct);
-            return new RagAnswerResult(emptyAnswer, IsGrounded: true, RegenerationAttempted: false);
+            return new RagAnswerResult(emptyAnswer, IsGrounded: true, RegenerationAttempted: false, IsAnswerAvailable: false);
         }
 
         var chunkTexts = chunks.ToDictionary(c => c.Chunk.ChunkId, c => c.Chunk.Text);
@@ -38,13 +45,13 @@ public sealed class VerifiedRagAnswerGenerator(RagRetriever retriever, RagAnswer
         var draft = await generator.GenerateAsync(query, chunks, ct);
         var check = CitationGroundingChecker.Check(draft, chunkTexts);
         if (check.IsFullyGrounded)
-            return new RagAnswerResult(draft, IsGrounded: true, RegenerationAttempted: false);
+            return new RagAnswerResult(draft, IsGrounded: true, RegenerationAttempted: false, IsAnswerAvailable: true);
 
         var corrected = await generator.RegenerateAsync(query, chunks, draft, check, ct);
         var recheck = CitationGroundingChecker.Check(corrected, chunkTexts);
         if (recheck.IsFullyGrounded)
-            return new RagAnswerResult(corrected, IsGrounded: true, RegenerationAttempted: true);
+            return new RagAnswerResult(corrected, IsGrounded: true, RegenerationAttempted: true, IsAnswerAvailable: true);
 
-        return new RagAnswerResult(AbstentionMessage, IsGrounded: false, RegenerationAttempted: true);
+        return new RagAnswerResult(AbstentionMessage, IsGrounded: false, RegenerationAttempted: true, IsAnswerAvailable: false);
     }
 }

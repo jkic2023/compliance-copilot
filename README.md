@@ -44,8 +44,10 @@ due date, a late annual company review payment fee will apply. In some cases, AS
 deregistering your company. [chunk:asic-company-annual-review#5]
 ```
 
-More real transcripts, including the required hallucination-catch demo, are in
-[`docs/testing.md`](docs/testing.md).
+The full required demo — all four scenarios (general RAG, MCP-tool, mixed query, hallucination-catch)
+in one scripted walkthrough — is in [`docs/demo-transcript.md`](docs/demo-transcript.md). A deeper
+step-by-step manual test guide, including the scoping-constraint proof and every degradation path, is
+in [`docs/testing.md`](docs/testing.md).
 
 ---
 
@@ -265,12 +267,30 @@ A full step-by-step manual walkthrough of every required scenario is in
 - **A mixed-query answer that fails verification reads as two concatenated sentences, not one smooth
   paragraph** — a deliberate trade-off: correctness over polish. The brief explicitly deprioritises UI
   polish, and a safe, honest, slightly less fluent answer is the right side of that trade for this build.
-- Single-turn queries only — no multi-turn conversation memory.
-- `get_document` returns a text summary/metadata record, not an actual file.
-- English-only content and queries.
-- "Current user" is a single hardcoded mock identity per run — no login/auth flow, since auth is
-  explicitly out of scope for a mocked system.
-- "Traceable to source" means citing the source chunk/section, not exact byte/character offsets.
+
+---
+
+## Assumptions
+
+Where the brief was ambiguous, these are the calls made and why:
+
+- **"Current user" is a single hardcoded mock identity per run** (`u1`, configurable via
+  `Mcp:CurrentUserId`) — no login/auth flow, since authentication is explicitly out of scope for a
+  mocked system and the brief asks for a scoping *constraint*, not a full identity system.
+- **"Traceable to source" means citing the source chunk/section** (`[chunk:asic-company-annual-review#5]`),
+  not exact byte/character offsets — a chunk is already the smallest independently-meaningful unit this
+  build retrieves, so a finer-grained offset wouldn't add real traceability, only noise.
+- **Single-turn queries only** — no multi-turn conversation memory. The brief's own example query is
+  single-turn, and conversation state would be a substantial addition (history truncation, re-grounding
+  across turns) for a feature not asked for.
+- **`get_document` returns a text summary/metadata record, not an actual file** — there is no real file
+  storage being mocked here, consistent with every other mocked data source in this build being JSON
+  fixtures, not simulated binary storage.
+- **English-only content and queries** — the sourced RAG corpus (real ASIC guidance pages) is English,
+  and no multilingual requirement is stated in the brief.
+- **A "genuinely small corpus" (10–30 pages) means an in-memory brute-force vector store is the right
+  choice**, not a gap — the brief explicitly says a real vector DB isn't expected, and 34 chunks over 3
+  pages is well inside that range.
 
 ---
 
@@ -296,6 +316,7 @@ ComplianceCopilot.slnx
 README.md
 docs/
   project-overview.html      full architecture write-up (this file's companion, TOC + diagrams)
+  demo-transcript.md         the required 4-scenario demo, scripted (screen-recording alternative)
   testing.md                 manual walkthrough of every required scenario
   architecture.html          internal build notes (gitignored, not part of the deliverable)
   interview-prep.md          internal walkthrough rehearsal notes (gitignored)

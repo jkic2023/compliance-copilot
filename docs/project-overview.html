@@ -2,9 +2,616 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Compliance Copilot — Project Overview</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1c2024;
+    --muted: #5b6570;
+    --border: #e2e5e9;
+    --surface: #f6f7f9;
+    --accent: #0b5cad;
+    --code-bg: #f2f3f5;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a;
+      --fg: #dfe3e7;
+      --muted: #99a3ac;
+      --border: #2b3037;
+      --surface: #1b1f23;
+      --accent: #66aaf0;
+      --code-bg: #1f242a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  header h1 { font-size: 1.9rem; margin: 0 0 .3rem; line-height: 1.2; }
+  header p.sub { color: var(--muted); margin: 0 0 1.5rem; font-size: 1.05rem; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0 0 2.5rem;
+  }
+  nav.toc strong {
+    display: block;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: .6rem;
+  }
+  nav.toc ol { margin: 0; padding-left: 1.4rem; }
+  nav.toc li { margin: .25rem 0; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  h2 {
+    font-size: 1.35rem;
+    margin: 2.75rem 0 .75rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: none; }
+  h3 { font-size: 1.05rem; margin: 1.5rem 0 .5rem; }
+  p { margin: .6rem 0; }
+  ul, ol { margin: .6rem 0; padding-left: 1.4rem; }
+  li { margin: .3rem 0; }
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--mono);
+    font-size: .88em;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .05em .35em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; border: none; padding: 0; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: .92rem;
+    display: block;
+    overflow-x: auto;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .5rem .7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--surface); font-weight: 600; }
+
+  figure { margin: 1.5rem 0; }
+  figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+
+  .mermaid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: .75rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+</style>
 </head>
 <body>
-<!-- Scaffold placeholder — full TOC + Mermaid-diagram write-up added once the architecture is built. -->
+<div class="wrap">
+
+<header>
+  <h1>Compliance Copilot</h1>
+  <p class="sub">A .NET 10 AI agent for a fictional company-compliance SaaS platform: RAG over public
+  regulator guidance for general knowledge, MCP tool calls over mocked user data for account-specific
+  facts, and two deterministic verification mechanisms that catch the model when it gets things wrong.</p>
+</header>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#structure">Solution structure</a></li>
+    <li><a href="#pipeline">Runtime pipeline</a></li>
+    <li><a href="#agentic">Agentic vs. deterministic</a></li>
+    <li><a href="#hallucination">Hallucination mitigation</a></li>
+    <li><a href="#mcp">MCP server design</a></li>
+    <li><a href="#rag">RAG implementation</a></li>
+    <li><a href="#failure">Failure handling</a></li>
+    <li><a href="#config">Configuration</a></li>
+    <li><a href="#running">Building &amp; running</a></li>
+    <li><a href="#testing">Testing</a></li>
+    <li><a href="#limitations">Known limitations</a></li>
+    <li><a href="#assumptions">Assumptions</a></li>
+  </ol>
+</nav>
+
+<section id="overview">
+  <h2>1. Overview</h2>
+  <p>
+    The scenario: a SaaS platform for accounting/bookkeeping firms needs an AI assistant that can
+    answer two genuinely different kinds of question, and must always know which one it's answering.
+    A general-knowledge question ("what happens if I miss my annual review?") is answered from a small
+    RAG corpus of real public regulator guidance. An account-specific question ("when is <em>my</em>
+    next review due?") is answered by calling tools over a genuinely separate MCP server, backed by
+    mocked user data. A realistic query needs both at once.
+  </p>
+  <p>
+    The brief weights judgement — not features — as the dominant scoring criterion: knowing where to
+    let the model reason freely and where to constrain it with code, and having a real, demonstrated
+    way of catching the model when it's wrong. Every design decision below is made with that in mind
+    first, UI polish a distant last (the brief explicitly puts it out of scope).
+  </p>
+
+  <figure>
+    <pre class="mermaid">
+flowchart LR
+    U["User"] -->|"CLI query"| AGENT["ComplianceCopilot.Agent<br/>(.NET 10 console app)"]
+    AGENT -->|"chat / embed / verifier calls"| OLLAMA["Ollama<br/>(local)"]
+    AGENT -->|"stdio JSON-RPC,<br/>separate process"| MCP["ComplianceCopilot.McpServer"]
+    MCP --> DATA[("mock-data.json")]
+    AGENT --> IDX[("rag-index.json")]
+    </pre>
+    <figcaption>System context. The Agent is the only thing the user talks to; it talks to Ollama for
+    every LLM/embedding call and to the MCP server as a genuinely separate OS process.</figcaption>
+  </figure>
+</section>
+
+<section id="structure">
+  <h2>2. Solution structure</h2>
+  <figure>
+    <pre class="mermaid">
+flowchart RL
+    AGENT["ComplianceCopilot.Agent<br/><small>orchestrator, RAG, verification, MCP client</small>"]
+    MCPSRV["ComplianceCopilot.McpServer<br/><small>stdio MCP server, mock data + tools</small>"]
+    SHARED["ComplianceCopilot.Shared<br/><small>DTOs, checkers, config</small>"]
+    INGEST["ComplianceCopilot.Ingestion<br/><small>one-off: chunk + embed + persist</small>"]
+    TESTS["ComplianceCopilot.Tests<br/><small>xUnit, 58 tests</small>"]
+
+    AGENT --> SHARED
+    MCPSRV --> SHARED
+    INGEST --> SHARED
+    TESTS --> SHARED
+    TESTS -.->|"tool logic, no live protocol"| MCPSRV
+    </pre>
+    <figcaption>Five projects. Shared has no dependencies of its own — every DTO and every
+    deterministic checker lives there so both the Agent and the MCP server (and the tests) can use the
+    exact same types without duplicating logic.</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>Project</th><th>Contains</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>…Agent</code></td>
+        <td><code>Orchestration/</code> (intent extraction, routing, the per-turn control flow),
+        <code>Rag/</code> (retrieval, generation, the verified-answer wrapper), <code>Mcp/</code>
+        (the MCP client wrapping a subprocess connection).</td>
+      </tr>
+      <tr>
+        <td><code>…McpServer</code></td>
+        <td><code>Tools/ComplianceTools.cs</code> (the three MCP tools), <code>Data/mock-data.json</code>
+        (the fixture).</td>
+      </tr>
+      <tr>
+        <td><code>…Shared</code></td>
+        <td><code>Domain/</code> (entities, the compliance-status evaluator, the company resolver),
+        <code>Agent/</code> (intent types, the query router, the tool-result formatter and
+        cross-checker), <code>Rag/</code> (chunk/index types, the citation grounding checker),
+        <code>Results/</code> (<code>ToolOutcome&lt;T&gt;</code>), <code>Configuration/</code>
+        (options classes).</td>
+      </tr>
+      <tr>
+        <td><code>…Ingestion</code></td>
+        <td>A one-shot console tool: reads <code>content/raw/*.md</code>, chunks, embeds via
+        <code>nomic-embed-text</code>, writes <code>rag-index.json</code>. Always a full rebuild —
+        simpler and more honest than incremental updates for a corpus this small.</td>
+      </tr>
+      <tr>
+        <td><code>…Tests</code></td>
+        <td>58 xUnit tests — every deterministic piece (checkers, parser, router, formatter,
+        cross-checker, chunker, MCP tool logic incl. the scoping constraint) exercised against fixed
+        inputs. No live Ollama connection required for any of them.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="pipeline">
+  <h2>3. Runtime pipeline</h2>
+  <p>
+    Every user turn goes through <code>AgentOrchestrator.HandleAsync</code>. The diagram below is the
+    full decision tree, including the two verification layers and the two places a degraded answer can
+    come back instead of an LLM-composed one.
+  </p>
+
+  <figure>
+    <pre class="mermaid">
+flowchart TB
+    Q(["User query"]) --> IE["IntentExtractor<br/><small>agentic — LLM proposes JSON</small>"]
+    IE --> IP["IntentParser + QueryRouter<br/><small>deterministic</small>"]
+    IP --> R{"Route"}
+
+    R -->|"RagOnly"| RAG1
+    R -->|"ToolOnly"| TOOL1
+    R -->|"Both"| BOTH
+
+    subgraph RAG1 ["RAG path"]
+      RR["RagRetriever<br/><small>embed + cosine top-k</small>"] --> RG["RagAnswerGenerator<br/><small>agentic draft w/ citations</small>"]
+      RG --> GC{"CitationGroundingChecker<br/><small>deterministic</small>"}
+      GC -->|"pass"| RA1["real answer"]
+      GC -->|"fail"| CORR["RegenerateAsync<br/><small>agentic, smaller verifier model</small>"]
+      CORR --> GC2{"re-check"}
+      GC2 -->|"pass"| RA1
+      GC2 -->|"fail"| AB["abstain"]
+    end
+
+    subgraph TOOL1 ["Tool path"]
+      GUC["get_user_companies<br/><small>deterministic — always first</small>"] --> CR["CompanyResolver<br/><small>deterministic</small>"]
+      CR --> MT["MCP tool call"] --> FMT["ToolResultFormatter<br/><small>deterministic, zero LLM</small>"]
+    end
+
+    subgraph BOTH ["Mixed path"]
+      TF["Tool fact (as above)"] --> AV{"Both halves<br/>available?<br/><small>deterministic</small>"}
+      RF["RAG answer (as above)"] --> AV
+      AV -->|"no"| CAT["plain concatenation<br/><small>deterministic</small>"]
+      AV -->|"yes"| CMP["ComposeAsync<br/><small>agentic blend</small>"]
+      CMP --> VC{"tool-value +<br/>citation check<br/><small>deterministic</small>"}
+      VC -->|"pass"| FINAL["composed answer"]
+      VC -->|"fail"| CAT
+    end
+    </pre>
+    <figcaption>Every diamond is deterministic code. The LLM only ever proposes (intent JSON, a RAG
+    draft, a correction, a composed blend) — code always decides what happens with what it proposed.</figcaption>
+  </figure>
+</section>
+
+<section id="agentic">
+  <h2>4. Agentic vs. deterministic</h2>
+  <p>The single sentence this build is organised around: <strong>the LLM proposes, deterministic code
+  disposes — it never gets the last word on whether something is true.</strong></p>
+
+  <table>
+    <thead><tr><th>Step</th><th>Who</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Extracting intent/entities from free text</td><td>Agentic</td><td>Genuinely needs language understanding.</td></tr>
+      <tr><td>Turning that into a typed <code>Intent</code> + choosing a route</td><td>Deterministic</td><td><code>IntentParser</code> has a named fallback for malformed output; <code>QueryRouter</code> is a pure function. Interpreting the LLM's proposal is never left to another LLM call.</td></tr>
+      <tr><td>Resolving a free-text company name to a real <code>companyId</code></td><td>Deterministic</td><td><code>CompanyResolver</code> matches against the real list from the MCP server — the LLM never sees or invents an ID.</td></tr>
+      <tr><td>Tool-call argument construction</td><td>Deterministic</td><td>Built from already-resolved, validated values only.</td></tr>
+      <tr><td>Formatting a tool-only answer</td><td>Deterministic</td><td><code>ToolResultFormatter</code> — pure templating, zero LLM calls, zero hallucination risk <em>by construction</em>.</td></tr>
+      <tr><td>Drafting a RAG answer with citations</td><td>Agentic</td><td>Composing prose from retrieved passages is exactly an LLM task.</td></tr>
+      <tr><td>Verifying those citations</td><td>Deterministic</td><td><code>CitationGroundingChecker</code> — mechanical checks, and the part that actually catches a hallucination rather than just declaring a policy against one.</td></tr>
+      <tr><td>The one-shot correction rewrite</td><td>Agentic, distinct smaller model</td><td>A real second opinion, still deterministically re-checked exactly once before abstaining.</td></tr>
+      <tr><td>Composing tool fact + RAG answer</td><td>Agentic, gated by a deterministic pre-check</td><td>Blending prose is a language task; deciding whether it's <em>safe</em> to blend at all is not.</td></tr>
+      <tr><td>Tool-value and citation cross-check on the composed answer</td><td>Deterministic</td><td>Caught two real failure modes live: dropped citations and an invented fake citation ID.</td></tr>
+      <tr><td>Outage/failure handling</td><td>Deterministic</td><td>Never "ask the LLM to explain the error" — a control-flow decision, not a language one.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    Where this shows up most concretely in the code: the LLM's proposed tool arguments never reach a
+    tool call without passing through <code>CompanyResolver</code> first, and the LLM's draft RAG
+    answer never reaches the user without passing through <code>CitationGroundingChecker</code> first.
+    The boundary is visible in the call graph, not just asserted in this document.
+  </div>
+</section>
+
+<section id="hallucination">
+  <h2>5. Hallucination mitigation</h2>
+  <p>Two independent, deterministic mechanisms — chosen over confidence/log-prob scoring (see
+  Rejected alternative below) — each targeting the one place in the pipeline an LLM's output reaches
+  the user without a code-level check otherwise.</p>
+
+  <h3>5.1 Citation grounding (RAG answers)</h3>
+  <p><code>RagAnswerGenerator</code>'s prompt requires an inline <code>[chunk:ID]</code> marker after
+  every factual claim. <code>CitationGroundingChecker</code> then runs three checks on the draft,
+  none of which trust the model's own claim that it cited correctly:</p>
+  <ol>
+    <li><strong>Every sentence has a citation.</strong> A sentence with none is unsupported by construction.</li>
+    <li><strong>Every cited ID was really retrieved.</strong> A citation to an ID the model invented, or
+    carried over from a different query, is caught here.</li>
+    <li><strong>Every number in a cited sentence appears in that chunk's actual text.</strong> This is
+    the check that catches a real-looking citation attached to a fabricated figure — the brief's own
+    named example (a fictional penalty amount).</li>
+  </ol>
+  <p>On failure: exactly one correction pass, run on <code>qwen2.5:1.5b</code> (<code>OllamaClients.Verifier</code>)
+  — a genuinely smaller, distinct model from the one that drafted the answer, so the second opinion is
+  real rather than the same model re-reading its own mistake. If the corrected answer still fails, the
+  system abstains rather than returning an unverified draft.</p>
+
+  <div class="note">
+    <strong>A real hallucination, caught live</strong> (now a permanent regression test): asked
+    <code>qwen2.5:1.5b</code> directly for the exact dollar amount of the ASIC late annual review fee —
+    a figure the source explicitly never states. It answered <em>"The late annual review payment fee is
+    $20. [chunk:asic-company-annual-review#5]"</em> — a real chunk ID attached to an invented number.
+    <code>qwen2.5:7b-instruct</code>, asked the identical question through the identical prompt,
+    correctly declined instead. The checker catches the fabrication regardless of which model drafted
+    it — the mechanism doesn't depend on the smaller model being the one doing the answering.
+  </div>
+
+  <p>A related bug found via this exact live case, not by inspection: the naive sentence splitter
+  originally treated a citation placed <em>after</em> a sentence's full stop (<code>qwen2.5:1.5b</code>
+  writes <code>"...fee is $20. [chunk:5]"</code> with the marker after the period, not before it) as a
+  separate fragment — which would have skipped the fabricated-number check on that sentence entirely.
+  Fixed by not splitting a sentence boundary immediately followed by a citation marker.</p>
+
+  <h3>5.2 Tool-result cross-check (the mixed-query composition step)</h3>
+  <p>
+    A tool-only answer is pure deterministic templating (<code>ToolResultFormatter</code>) and never
+    touches an LLM at all — zero drift risk by construction. The <em>only</em> place a tool-derived fact
+    passes through an LLM is the mixed-query composition step, where the model is asked to blend a tool
+    fact with a RAG answer into one natural response. <code>ToolResultCrossChecker</code> extracts the
+    key values (dates, document type) the tool fact was built from — mirroring
+    <code>ToolResultFormatter</code>'s own branching exactly, so it only checks values the compose model
+    was actually shown — and verifies they survive, character for character, into the composed text.
+  </p>
+  <p>
+    Live end-to-end testing surfaced two more real failure modes beyond value drift, neither anticipated
+    up front: the compose model <strong>silently dropping</strong> a citation that had already passed
+    the RAG grounding check, and separately <strong>inventing a citation ID</strong> that was never
+    among the retrieved chunks at all. <code>AgentOrchestrator.ComposeAsync</code> now checks for both,
+    alongside the value cross-check, and on any failure discards the LLM's phrasing entirely for a
+    plain, safe concatenation of the two already-verified pieces — not a second LLM attempt, since this
+    class of bug is exactly what asking the same step to "try again" tends to repeat.
+  </p>
+
+  <h3>Rejected alternative: confidence / log-prob / self-critique scoring</h3>
+  <p>
+    Ollama doesn't reliably expose per-token log-probabilities across arbitrary local models, and a
+    self-critique prompt is itself just another LLM call that can hallucinate its own confidence —
+    it adds complexity without a stronger correctness guarantee than a deterministic check on the
+    actual retrieved/tool data.
+  </p>
+</section>
+
+<section id="mcp">
+  <h2>6. MCP server design</h2>
+  <figure>
+    <pre class="mermaid">
+sequenceDiagram
+    participant Agent
+    participant MCP as McpServer (subprocess)
+    participant Data as mock-data.json
+
+    Agent->>MCP: get_user_companies() [stdio JSON-RPC]
+    MCP->>Data: filter by CurrentUserId (u1)
+    MCP-->>Agent: [Acme Pty Ltd, Beta Holdings Pty Ltd]
+
+    Note over Agent,MCP: A direct request for u2's company (gamma-1)...
+    Agent->>MCP: get_company_compliance_status("gamma-1")
+    MCP->>Data: company.OwnerUserId != CurrentUserId
+    MCP-->>Agent: Forbidden (not NotFound, not empty)
+    </pre>
+    <figcaption>The scoping constraint, proven over the real protocol boundary — see
+    <code>ComplianceToolsTests</code> for the automated version of this exact exchange.</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>Tool</th><th>Purpose</th><th>Failure modes (typed, not exceptions)</th></tr></thead>
+    <tbody>
+      <tr><td><code>get_user_companies</code></td><td>Lists companies for the current mock user.</td><td>&mdash;</td></tr>
+      <tr><td><code>get_company_compliance_status</code></td><td>Overdue/upcoming obligations, computed from an injected <code>TimeProvider</code> reference date.</td><td><code>ValidationFailed</code> (empty id), <code>NotFound</code> (unknown id), <code>Forbidden</code> (belongs to another user)</td></tr>
+      <tr><td><code>get_document</code></td><td>A mock document record by company + document type.</td><td>Same three, plus <code>NotFound</code> for an unknown document type</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Design choices worth naming explicitly: tools return <code>ToolOutcome&lt;T&gt;</code> instead of
+    throwing for expected failure paths — a real external API distinguishes "doesn't exist" from
+    "exists but isn't yours," and this codebase does too, all the way through to the user-facing message
+    (<code>ToolErrorKind.Forbidden</code> vs <code>NotFound</code>). Logging is routed to <code>stderr</code>,
+    since <code>stdout</code> is the JSON-RPC transport channel for a stdio server — a stray log line
+    there would corrupt every message after it.
+  </p>
+</section>
+
+<section id="rag">
+  <h2>7. RAG implementation</h2>
+  <figure>
+    <pre class="mermaid">
+flowchart LR
+    SRC["content/raw/*.md<br/><small>3 real ASIC guidance pages</small>"] --> CHUNK["DocumentChunker<br/><small>section/heading-based, 34 chunks</small>"]
+    CHUNK --> EMB["nomic-embed-text<br/><small>768-dim embeddings</small>"]
+    EMB --> IDX[("rag-index.json<br/><small>model + dimension + timestamp</small>")]
+    IDX --> RET["RagRetriever<br/><small>brute-force cosine top-k</small>"]
+    </pre>
+    <figcaption>The Ingestion tool (left three steps) is a one-shot, always-full-rebuild console app —
+    simpler and more honest than incremental updates for a corpus this small.</figcaption>
+  </figure>
+  <p>
+    <strong>Chunking rationale:</strong> section/heading-based, not fixed-size — these are real guidance
+    pages with genuine heading structure already, and a section boundary preserves a coherent unit of
+    meaning better than blind character-count splitting; it also makes a citation immediately readable
+    ("ASIC Annual Review guidance, §Late fees") rather than an arbitrary offset.
+  </p>
+  <p>
+    <strong>Vector store:</strong> in-memory list + brute-force cosine similarity, persisted to a
+    committed JSON file. A real vector database is unjustifiable overhead for 34 chunks — stated
+    explicitly as a judgement call, not a shortcut taken under time pressure.
+  </p>
+  <p>
+    <strong>Explicitly out of scope for RAG:</strong> the mocked user/entity/document data — that's MCP
+    tool territory only, and is never embedded or retrieved via RAG.
+  </p>
+</section>
+
+<section id="failure">
+  <h2>8. Failure handling</h2>
+  <p>Three outage scenarios, each confirmed live by actually breaking it, not just reasoned about:</p>
+  <table>
+    <thead><tr><th>Scenario</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Ollama itself unreachable (any LLM/embedding call)</td>
+        <td>Unhandled exception, full stack trace to the console.</td>
+        <td>One top-level catch in <code>AgentOrchestrator.HandleAsync</code> for
+        <code>HttpRequestException</code>/<code>TaskCanceledException</code> — full detail logged,
+        clean message returned. Caught once at the top rather than duplicated at every call site, since
+        the failure can originate from intent extraction, RAG, or composition alike.</td>
+      </tr>
+      <tr>
+        <td>MCP server unstartable / unreachable</td>
+        <td>The raw exception message, including the MCP subprocess's <code>stderr</code> tail, was
+        interpolated directly into the user-facing answer.</td>
+        <td>A short, clean sentence to the user; full detail (including the subprocess's stderr) logged
+        server-side via <code>ILogger</code> instead.</td>
+      </tr>
+      <tr>
+        <td>Mixed query where the tool half fails</td>
+        <td>The error string was still handed to the compose LLM to "blend" with the RAG answer — this
+        is what produced a fabricated citation ID during live testing.</td>
+        <td><code>ToolFact.IsAvailable</code> / <code>RagAnswerResult.IsAnswerAvailable</code> gate
+        composition entirely — either half being a status message returns both halves plainly instead,
+        no LLM call at all.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>Empty RAG retrieval (a genuinely out-of-corpus question) was already handled correctly from an
+  earlier commit — the pipeline abstains on the knowledge portion specifically, without even calling the
+  chat model, and this was regression-checked rather than re-implemented.</p>
+</section>
+
+<section id="config">
+  <h2>9. Configuration</h2>
+  <p>All settings bind through the options pattern. Override any key with an environment variable using
+  <code>__</code> as the separator (e.g. <code>Ollama__ChatModel</code>).</p>
+  <table>
+    <thead><tr><th>Section</th><th>Keys</th></tr></thead>
+    <tbody>
+      <tr><td><code>Ollama</code></td><td><code>BaseUrl</code>, <code>ChatModel</code>, <code>VerifierModel</code>, <code>EmbeddingModel</code>, <code>TimeoutSeconds</code></td></tr>
+      <tr><td><code>Rag</code></td><td><code>IndexPath</code>, <code>SourceContentPath</code>, <code>TopK</code>, <code>SimilarityThreshold</code></td></tr>
+      <tr><td><code>McpClient</code></td><td><code>ServerExecutablePath</code> (null = auto-detect relative to the Agent's own build output), <code>ShutdownTimeoutSeconds</code></td></tr>
+      <tr><td><code>Mcp</code> (server-side)</td><td><code>CurrentUserId</code>, <code>DataFilePath</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="running">
+  <h2>10. Building &amp; running</h2>
+  <p>Requires the <strong>.NET 10 SDK</strong> and <strong>Ollama</strong> running locally with
+  <code>qwen2.5:7b-instruct</code>, <code>qwen2.5:1.5b</code>, and <code>nomic-embed-text</code> pulled.</p>
+  <pre><code>dotnet build ComplianceCopilot.slnx
+dotnet test ComplianceCopilot.slnx                          # 58 tests
+
+dotnet run --project src/ComplianceCopilot.Ingestion         # rebuild rag-index.json from source
+
+dotnet run --project src/ComplianceCopilot.Agent -- ask "&lt;question&gt;"     # full pipeline
+dotnet run --project src/ComplianceCopilot.Agent -- rag "&lt;question&gt;"     # RAG only + grounding status
+dotnet run --project src/ComplianceCopilot.Agent -- intent "&lt;question&gt;"  # routing only
+
+dotnet run --project src/ComplianceCopilot.McpServer          # inspect the raw MCP protocol standalone</code></pre>
+  <p>See <a href="testing.md">docs/testing.md</a> for a full manual walkthrough of every required
+  scenario with real, captured transcripts.</p>
+</section>
+
+<section id="testing">
+  <h2>11. Testing</h2>
+  <table>
+    <thead><tr><th>What</th><th>Covers</th><th>Approach</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>ComplianceCopilot.Tests</code> (58 tests)</td>
+        <td>Citation grounding checker (incl. the real captured hallucination), tool-result
+        cross-checker, intent parser, query router, tool-result formatter, document chunker, MCP tool
+        logic including the scoping constraint.</td>
+        <td>Fixed inputs, no live model or live protocol connection needed for any of them.</td>
+      </tr>
+      <tr>
+        <td>Live/manual verification</td>
+        <td>Every end-to-end scenario the brief requires, plus the three failure-handling scenarios.</td>
+        <td>Documented step-by-step with real, unedited transcripts in <code>docs/testing.md</code> —
+        not just asserted to work.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="limitations">
+  <h2>12. Known limitations</h2>
+  <ul>
+    <li><strong>Per-sentence citation strictness vs. model compliance</strong> — the checker requires a
+    citation on every sentence; the model sometimes cites only the last sentence of a multi-sentence
+    claim, causing an occasional accurate answer to trigger an unnecessary correction pass or abstain.
+    Left as a deliberate trade-off (see README) rather than loosened, since every cheaper fix opens a
+    real gap for a fabrication to hide next to a genuinely cited claim.</li>
+    <li>A citation proves a number appears in the cited chunk, not that it's used in the right context —
+    it can't catch a real figure applied to the wrong scenario.</li>
+    <li>The ASIC late-fee dollar amount is genuinely absent from this build's corpus (the source names no
+    figure; a page that would have had one populates it client-side, not in the fetched markup) — a real
+    content gap, which is what makes it a reliable, non-contrived hallucination demo.</li>
+    <li>A mixed-query answer that fails verification reads as two concatenated sentences rather than one
+    smooth paragraph — correctness over polish, deliberately.</li>
+    <li>Single-turn queries only, no conversation memory; <code>get_document</code> returns a text
+    summary, not an actual file; English-only.</li>
+  </ul>
+</section>
+
+<section id="assumptions">
+  <h2>13. Assumptions</h2>
+  <ul>
+    <li>"Current user" is a single hardcoded mock identity per run — no login/auth flow, since auth is
+    explicitly out of scope for a mocked system.</li>
+    <li>"Traceable to source" means citing the source chunk/section, not exact byte/character offsets.</li>
+    <li>Single-turn queries only; no multi-turn conversation memory.</li>
+    <li><code>get_document</code> returns a text summary/metadata record, not an actual PDF/file.</li>
+    <li>English-only content and queries.</li>
+  </ul>
+</section>
+
+<footer>
+  Compliance Copilot — project overview. Diagrams are Mermaid; edit the source in this file.
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  (function () {
+    var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: dark ? "dark" : "neutral",
+      flowchart: { useMaxWidth: true, htmlLabels: true },
+      sequence: { useMaxWidth: true },
+      securityLevel: "strict"
+    });
+  })();
+</script>
 </body>
 </html>

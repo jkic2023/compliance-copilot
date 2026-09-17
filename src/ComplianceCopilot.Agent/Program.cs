@@ -44,11 +44,11 @@ builder.Services.AddSingleton(sp =>
 
 builder.Services.AddSingleton<RagRetriever>();
 builder.Services.AddSingleton<RagAnswerGenerator>();
+builder.Services.AddSingleton<VerifiedRagAnswerGenerator>();
 builder.Services.AddSingleton<IntentExtractor>();
 
-// Hallucination verification is added in the next commit. For now:
 //   dotnet run --project src/ComplianceCopilot.Agent -- ask "your question here"     (full pipeline)
-//   dotnet run --project src/ComplianceCopilot.Agent -- rag "your question here"     (RAG only, standalone)
+//   dotnet run --project src/ComplianceCopilot.Agent -- rag "your question here"     (RAG only + grounding check, standalone)
 //   dotnet run --project src/ComplianceCopilot.Agent -- intent "your question here"  (routing only, standalone)
 
 var host = builder.Build();
@@ -68,7 +68,7 @@ else if (args.Length >= 2 && args[0] == "rag")
 {
     var query = string.Join(' ', args[1..]);
     var retriever = host.Services.GetRequiredService<RagRetriever>();
-    var generator = host.Services.GetRequiredService<RagAnswerGenerator>();
+    var verifiedGenerator = host.Services.GetRequiredService<VerifiedRagAnswerGenerator>();
 
     Console.WriteLine($"Query: {query}\n");
 
@@ -78,9 +78,11 @@ else if (args.Length >= 2 && args[0] == "rag")
         Console.WriteLine($"  [{r.Chunk.ChunkId}] similarity={r.Similarity:F3} - {r.Chunk.Heading}");
 
     Console.WriteLine();
-    var answer = await generator.GenerateAsync(query, retrieved);
+    var result = await verifiedGenerator.AnswerAsync(query);
     Console.WriteLine("Answer:");
-    Console.WriteLine(answer);
+    Console.WriteLine(result.Answer);
+    Console.WriteLine();
+    Console.WriteLine($"Grounded: {result.IsGrounded} (regeneration attempted: {result.RegenerationAttempted})");
 }
 else if (args.Length >= 2 && args[0] == "intent")
 {
